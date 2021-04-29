@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head includeDefault="true">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <title>3D库图显示</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+    <script src="./ThreeJs/js/three.js"></script>
+    <script src="./ThreeJs/js/stats.min.js"></script>
+    <script src="./ThreeJs/js/OBJLoader.js"></script>
+    <script src="./ThreeJs/js/OrbitControls.js"></script>
+</head>
+<body>
+<div id="container"></div>
+
+<script>
+
+    var stats = initStats();
+    var scene, camera, renderer, controls, light;
+
+    // 初始化场景
+    function initScene() {
+        scene = new THREE.Scene();
+        scene.fog = new THREE.Fog(scene.background, 3000, 5000);
+    }
+
+    // 初始化相机
+    function initCamera() {
+        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 10000);
+        camera.position.set(0, 800, 1500);
+        camera.lookAt(new THREE.Vector3(0, 0, 0));
+    }
+
+    // 初始化灯光
+    function initLight() {
+        var directionalLight = new THREE.DirectionalLight(0xffffff, 0.3);//模拟远处类似太阳的光源
+        directionalLight.color.setHSL(0.1, 1, 0.95);
+        directionalLight.position.set(0, 200, 0).normalize();
+        scene.add(directionalLight);//场景添加直接光源
+
+        var ambient = new THREE.AmbientLight(0xffffff, 1); //AmbientLight,影响整个场景的光源
+        ambient.position.set(0, 0, 0);
+        scene.add(ambient);//场景添加光源
+    }
+
+    // 初始化性能插件
+    function initStats() {
+        var stats = new Stats();
+
+        stats.domElement.style.position = 'absolute';
+        stats.domElement.style.left = '0px';
+        stats.domElement.style.top = '0px';
+
+        document.body.appendChild(stats.domElement);
+        return stats;
+    }
+
+    // 初始化渲染器
+    function initRenderer() {
+        renderer = new THREE.WebGLRenderer({antialias: true});
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setClearColor(0x4682B4, 1.0);
+        document.body.appendChild(renderer.domElement);
+    }
+
+    //创建地板
+    function createFloor() {
+        var loader = new THREE.TextureLoader();
+        loader.load("./ThreeJs/images/floor.jpg", function (texture) {
+            texture.wrapS = texture.wrapT = THREE.RepeatWrapping;
+            texture.repeat.set(10, 10);
+            var floorGeometry = new THREE.BoxGeometry(2600, 1400, 1);
+            var floorMaterial = new THREE.MeshBasicMaterial({map: texture, side: THREE.DoubleSide});
+            var floor = new THREE.Mesh(floorGeometry, floorMaterial);
+            floor.position.y = -0.5;
+            floor.rotation.x = Math.PI / 2;
+            floor.name = "地面";
+            scene.add(floor);//添加地板
+        });
+    }
+
+    // 初始化模型
+    function initContent() {
+        createFloor();
+    }
+
+    // 初始化轨迹球控件
+    function initControls() {
+        controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.5;
+        // 视角最小距离
+        controls.minDistance = 100;
+        // 视角最远距离
+        controls.maxDistance = 5000;
+        // 最大角度
+        controls.maxPolarAngle = Math.PI / 2.2;
+    }
+
+    // 更新控件
+    function update() {
+        stats.update();
+        controls.update();
+    }
+
+    // 初始化
+    function init() {
+        initScene();
+        initCamera();
+        initRenderer();
+        initContent();
+        initLight();
+        initControls();
+        window.addEventListener('resize', onWindowResize, false)
+    }
+
+    // 窗口变动触发的方法
+    function onWindowResize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    }
+
+    function animate() {
+        requestAnimationFrame(animate);
+        renderer.render(scene, camera);
+        update();
+    }
+
+    init();
+    animate();
+</script>
+</body>
+</html>
